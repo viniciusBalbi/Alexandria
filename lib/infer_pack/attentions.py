@@ -298,7 +298,7 @@ class MultiHeadAttention(nn.Module):
 
     def _get_relative_embeddings(self, relative_embeddings, length):
         max_relative_position = 2 * self.window_size + 1
-        # Pad first before slice to avoid using cond ops.
+        # Acolchoe primeiro antes de fatiar para evitar o uso de operações de condensação.
         pad_length = max(length - (self.window_size + 1), 0)
         slice_start_position = max((self.window_size + 1) - length, 0)
         slice_end_position = slice_start_position + 2 * length - 1
@@ -320,16 +320,16 @@ class MultiHeadAttention(nn.Module):
         ret: [b, h, l, l]
         """
         batch, heads, length, _ = x.size()
-        # Concat columns of pad to shift from relative to absolute indexing.
+        # Concat colunas de pad para mudar de indexação relativa para absoluta.
         x = F.pad(x, commons.convert_pad_shape([[0, 0], [0, 0], [0, 0], [0, 1]]))
 
-        # Concat extra elements so to add up to shape (len+1, 2*len-1).
+        # Concatene elementos extras para somar a forma (len+1, 2*len-1).
         x_flat = x.view([batch, heads, length * 2 * length])
         x_flat = F.pad(
             x_flat, commons.convert_pad_shape([[0, 0], [0, 0], [0, length - 1]])
         )
 
-        # Reshape and slice out the padded elements.
+        # Remodele e corte os elementos acolchoados.
         x_final = x_flat.view([batch, heads, length + 1, 2 * length - 1])[
             :, :, :length, length - 1 :
         ]
@@ -341,12 +341,12 @@ class MultiHeadAttention(nn.Module):
         ret: [b, h, l, 2*l-1]
         """
         batch, heads, length, _ = x.size()
-        # padd along column
+        # preencher ao longo da coluna
         x = F.pad(
             x, commons.convert_pad_shape([[0, 0], [0, 0], [0, 0], [0, length - 1]])
         )
         x_flat = x.view([batch, heads, length**2 + length * (length - 1)])
-        # add 0's in the beginning that will skew the elements after reshape
+        # adicione 0 no início que distorcerá os elementos após a remodelação
         x_flat = F.pad(x_flat, commons.convert_pad_shape([[0, 0], [0, 0], [length, 0]]))
         x_final = x_flat.view([batch, heads, length, 2 * length])[:, :, :, 1:]
         return x_final

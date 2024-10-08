@@ -23,7 +23,7 @@ TESTED_CODECS = [
 
 
 class OperationFailedError(Exception):
-    def __init__(self, message="The operation did not complete successfully."):
+    def __init__(self, message="A operação não foi concluída com êxito."):
         self.message = message
         super().__init__(self.message)
 
@@ -53,14 +53,14 @@ def audio_preprocessor(preview, base_audio, audio_wav, use_cuda=False):
 
     if preview:
         logger.warning(
-            "Creating a preview video of 10 seconds, to disable "
-            "this option, go to advanced settings and turn off preview."
+            "Criando um vídeo de visualização de 10 segundos, para desativar "
+            "esta opção, vá para configurações avançadas e desative a visualização."
         )
         wav_ = f'ffmpeg -y -i "{base_audio}" -ss 00:00:20 -t 00:00:10 -vn -acodec pcm_s16le -ar 44100 -ac 2 audio.wav'
     else:
         wav_ = f'ffmpeg -y -i "{base_audio}" -vn -acodec pcm_s16le -ar 44100 -ac 2 audio.wav'
 
-    # Run cmd process
+    # Execute o processo cmd
     sub_params = {
         "stdout": subprocess.PIPE,
         "stderr": subprocess.PIPE,
@@ -75,7 +75,7 @@ def audio_preprocessor(preview, base_audio, audio_wav, use_cuda=False):
     if result_convert_audio.returncode in [1, 2] or not os.path.exists(
         audio_wav
     ):
-        raise OperationFailedError(f"Error can't create the audio file:\n{errors.decode('utf-8')}")
+        raise OperationFailedError(f"Erro não é possível criar o arquivo de áudio:\n{errors.decode('utf-8')}")
 
 
 def audio_video_preprocessor(
@@ -88,19 +88,19 @@ def audio_video_preprocessor(
     if os.path.exists(video):
         if preview:
             logger.warning(
-                "Creating a preview video of 10 seconds, "
-                "to disable this option, go to advanced "
-                "settings and turn off preview."
+                "Criando um vídeo de visualização de 10 segundos, "
+                "para desativar esta opção, vá para avançado "
+                "configurações e desative a visualização."
             )
             mp4_ = f'ffmpeg -y -i "{video}" -ss 00:00:20 -t 00:00:10 -c:v libx264 -c:a aac -strict experimental Video.mp4'
         else:
             video_codec = get_video_codec(video)
             if not video_codec:
-                logger.debug("No video codec found in video")
+                logger.debug("Nenhum codec de vídeo encontrado no vídeo")
             else:
                 logger.info(f"Video codec: {video_codec}")
 
-            # Check if the file ends with ".mp4" extension or is valid codec
+            # Verifique se o arquivo termina com extensão ".mp4" ou é um codec válido
             if video.endswith(".mp4") or video_codec in TESTED_CODECS:
                 destination_path = os.path.join(os.getcwd(), "Video.mp4")
                 shutil.copy(video, destination_path)
@@ -111,16 +111,16 @@ def audio_video_preprocessor(
                     mp4_ = f'ffmpeg -y -i "{video}" -c copy Video.mp4'
             else:
                 logger.warning(
-                    "File does not have the '.mp4' extension  or a "
-                    "supported codec. Converting video to mp4 (codec: h264)."
+                    "O arquivo não possui a extensão '.mp4' ou um "
+                    "codec suportado. Convertendo vídeo para mp4 (codec: h264)."
                 )
                 mp4_ = f'ffmpeg -y -i "{video}" -c:v libx264 -c:a aac -strict experimental Video.mp4'
     else:
         if preview:
             logger.warning(
-                "Creating a preview from the link, 10 seconds "
-                "to disable this option, go to advanced "
-                "settings and turn off preview."
+                "Criando uma visualização a partir do link, 10 segundos "
+                "para desativar esta opção, vá para avançado "
+                "configurações e desative a visualização."
             )
             # https://github.com/yt-dlp/yt-dlp/issues/2220
             mp4_ = f'yt-dlp -f "mp4" --downloader ffmpeg --downloader-args "ffmpeg_i: -ss 00:00:20 -t 00:00:10" --force-overwrites --max-downloads 1 --no-warnings --no-playlist --no-abort-on-error --ignore-no-formats-error --restrict-filenames -o {OutputFile} {video}'
@@ -140,7 +140,7 @@ def audio_video_preprocessor(
     }
 
     if os.path.exists(video):
-        logger.info("Process video...")
+        logger.info("Vídeo do processo...")
         result_convert_video = subprocess.Popen(mp4_, **sub_params)
         # result_convert_video.wait()
         output, errors = result_convert_video.communicate()
@@ -148,8 +148,8 @@ def audio_video_preprocessor(
         if result_convert_video.returncode in [1, 2] or not os.path.exists(
             OutputFile
         ):
-            raise OperationFailedError(f"Error processing video:\n{errors.decode('utf-8')}")
-        logger.info("Process audio...")
+            raise OperationFailedError(f"Erro ao processar o vídeo:\n{errors.decode('utf-8')}")
+        logger.info("Processar áudio...")
         wav_ = "ffmpeg -y -i Video.mp4 -vn -acodec pcm_s16le -ar 44100 -ac 2 audio.wav"
         wav_ = shlex.split(wav_)
         result_convert_audio = subprocess.Popen(wav_, **sub_params)
@@ -158,7 +158,7 @@ def audio_video_preprocessor(
         if result_convert_audio.returncode in [1, 2] or not os.path.exists(
             audio_wav
         ):
-            raise OperationFailedError(f"Error can't create the audio file:\n{errors.decode('utf-8')}")
+            raise OperationFailedError(f"Erro não é possível criar o arquivo de áudio:\n{errors.decode('utf-8')}")
 
     else:
         wav_ = shlex.split(wav_)
@@ -173,25 +173,25 @@ def audio_video_preprocessor(
                 audio_wav
             ):
                 raise OperationFailedError(
-                    f"Error can't create the preview file:\n{errors.decode('utf-8')}"
+                    f"Erro, não é possível criar o arquivo de visualização:\n{errors.decode('utf-8')}"
                 )
         else:
-            logger.info("Process audio...")
+            logger.info("Processar áudio...")
             result_convert_audio = subprocess.Popen(wav_, **sub_params)
             output, errors = result_convert_audio.communicate()
             time.sleep(1)
             if result_convert_audio.returncode in [1, 2] or not os.path.exists(
                 audio_wav
             ):
-                raise OperationFailedError(f"Error can't download the audio:\n{errors.decode('utf-8')}")
-            logger.info("Process video...")
+                raise OperationFailedError(f"Erro não consigo baixar o áudio:\n{errors.decode('utf-8')}")
+            logger.info("Processar vídeo...")
             result_convert_video = subprocess.Popen(mp4_, **sub_params)
             output, errors = result_convert_video.communicate()
             time.sleep(1)
             if result_convert_video.returncode in [1, 2] or not os.path.exists(
                 OutputFile
             ):
-                raise OperationFailedError(f"Error can't download the video:\n{errors.decode('utf-8')}")
+                raise OperationFailedError(f"Erro não consigo baixar o vídeo:\n{errors.decode('utf-8')}")
 
 
 def old_audio_video_preprocessor(preview, video, OutputFile, audio_wav):
@@ -201,9 +201,9 @@ def old_audio_video_preprocessor(preview, video, OutputFile, audio_wav):
     if os.path.exists(video):
         if preview:
             logger.warning(
-                "Creating a preview video of 10 seconds, "
-                "to disable this option, go to advanced "
-                "settings and turn off preview."
+                "Criando um vídeo de visualização de 10 segundos, "
+                "para desativar esta opção, vá para avançado "
+                "configurações e desative a visualização."
             )
             command = f'ffmpeg -y -i "{video}" -ss 00:00:20 -t 00:00:10 -c:v libx264 -c:a aac -strict experimental Video.mp4'
             result_convert_video = subprocess.run(
@@ -223,7 +223,7 @@ def old_audio_video_preprocessor(preview, video, OutputFile, audio_wav):
                 )
             else:
                 logger.warning(
-                    "File does not have the '.mp4' extension. Converting video."
+                    "O arquivo não possui a extensão '.mp4'. Convertendo vídeo."
                 )
                 command = f'ffmpeg -y -i "{video}" -c:v libx264 -c:a aac -strict experimental Video.mp4'
                 result_convert_video = subprocess.run(
@@ -231,11 +231,11 @@ def old_audio_video_preprocessor(preview, video, OutputFile, audio_wav):
                 )
 
         if result_convert_video.returncode in [1, 2]:
-            raise OperationFailedError("Error can't convert the video")
+            raise OperationFailedError("Erro não é possível converter o vídeo")
 
         for i in range(120):
             time.sleep(1)
-            logger.info("Process video...")
+            logger.info("Processar vídeo...")
             if os.path.exists(OutputFile):
                 time.sleep(1)
                 command = "ffmpeg -y -i Video.mp4 -vn -acodec pcm_s16le -ar 44100 -ac 2 audio.wav"
@@ -246,28 +246,28 @@ def old_audio_video_preprocessor(preview, video, OutputFile, audio_wav):
                 break
             if i == 119:
                 # if not os.path.exists(OutputFile):
-                raise OperationFailedError("Error processing video")
+                raise OperationFailedError("Erro ao processar o vídeo")
 
         if result_convert_audio.returncode in [1, 2]:
             raise OperationFailedError(
-                f"Error can't create the audio file: {result_convert_audio.stderr}"
+                f"Erro não é possível criar o arquivo de áudio: {result_convert_audio.stderr}"
             )
 
         for i in range(120):
             time.sleep(1)
-            logger.info("Process audio...")
+            logger.info("Processar áudio...")
             if os.path.exists(audio_wav):
                 break
             if i == 119:
-                raise OperationFailedError("Error can't create the audio file")
+                raise OperationFailedError("Erro não é possível criar o arquivo de áudio")
 
     else:
         video = video.strip()
         if preview:
             logger.warning(
-                "Creating a preview from the link, 10 "
-                "seconds to disable this option, go to "
-                "advanced settings and turn off preview."
+                "Criando uma visualização a partir do link, 10 "
+                "segundos para desativar esta opção, vá para "
+                "configurações avançadas e desative a visualização."
             )
             # https://github.com/yt-dlp/yt-dlp/issues/2220
             mp4_ = f'yt-dlp -f "mp4" --downloader ffmpeg --downloader-args "ffmpeg_i: -ss 00:00:20 -t 00:00:10" --force-overwrites --max-downloads 1 --no-warnings --no-abort-on-error --ignore-no-formats-error --restrict-filenames -o {OutputFile} {video}'
@@ -289,11 +289,11 @@ def old_audio_video_preprocessor(preview, video, OutputFile, audio_wav):
             )
 
             if result_convert_audio.returncode in [1, 2]:
-                raise OperationFailedError("Error can't download the audio")
+                raise OperationFailedError("Erro não consigo baixar o áudio")
 
             for i in range(120):
                 time.sleep(1)
-                logger.info("Process audio...")
+                logger.info("Processar áudio...")
                 if os.path.exists(audio_wav) and not os.path.exists(
                     "audio.webm"
                 ):
@@ -303,7 +303,7 @@ def old_audio_video_preprocessor(preview, video, OutputFile, audio_wav):
                     )
                     break
                 if i == 119:
-                    raise OperationFailedError("Error downloading the audio")
+                    raise OperationFailedError("Erro ao baixar o áudio")
 
             if result_convert_video.returncode in [1, 2]:
-                raise OperationFailedError("Error can't download the video")
+                raise OperationFailedError("Erro não consigo baixar o vídeo")
